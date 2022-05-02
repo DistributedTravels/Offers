@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using Models;
 using Models.Offers;
@@ -15,11 +16,14 @@ public class EventManager
     private IConnection _connection; // connection to RabbitMQ
     private IModel _channel; // connection channel to RabbitMQ, required to ACK messages
     private readonly WebApplication app; // used for retreiving service context (mostly DB)
+
+    private ConcurrentDictionary<string, TaskCompletionSource<string>> _taskQueue =
+        new ConcurrentDictionary<string, TaskCompletionSource<string>>();
     
     public EventManager(WebApplication app)
     {
         this.app = app;
-        this.RegisterHandler(new GetOffersHandler(this.Publish, this.app), typeof(GetOffersEvent));
+        this.RegisterHandler(new GetOffersHandler(this.Publish, this.Call, this.app), typeof(GetOffersEvent));
         // register the rest of Handlers + Events
     }
 
@@ -45,11 +49,17 @@ public class EventManager
                 _channel = _connection.CreateModel();
                 var consumer = new AsyncEventingBasicConsumer(_channel);
                 consumer.Received += ReceiveEvent;
+                var asyncResponseConsumer = new AsyncEventingBasicConsumer(_channel);
+                asyncResponseConsumer.Received += ReceiveResponse;
                 foreach (var @event in this.events) // create all queues and consumers handled in this service
                 {
                     _channel.QueueDeclare(queue: @event.Name, durable: false, exclusive: false, autoDelete: false,
                         arguments: null);
+                    _channel.QueueDeclare(queue: @event.Name + "ResponseQueue", durable: false, exclusive: false, autoDelete: false,
+                        arguments: null);
                     _channel.BasicConsume(queue: @event.Name, autoAck: false, consumer: consumer);
+                    _channel.BasicConsume(queue: @event.Name + "ResponseQueue", autoAck: false,
+                        consumer: asyncResponseConsumer);
                 }
             }
             catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException ex)
@@ -111,6 +121,16 @@ public class EventManager
         }
     }
 
+    private async Task ReceiveResponse(object sender, BasicDeliverEventArgs args)
+    {
+        Console.WriteLine("RabbitMQ Response Received");
+        var message = Encoding.UTF8.GetString(args.Body.ToArray());
+        if (_taskQueue.TryRemove(args.BasicProperties.CorrelationId, out var taskCompletionSource))
+        {
+            taskCompletionSource.SetResult(message);
+        }
+    }
+
     /**
      * <summary>
      * Method Publish sends passed event to proper RabbitMQ queue.
@@ -133,5 +153,27 @@ public class EventManager
                 basicProperties: properties,
                 body: body);
         }
+    }
+
+    private Task<string> Call(EventModel @event)
+    {
+        var callName = @event.GetType().Name;
+        var taskCompletionSource = new TaskCompletionSource<string>();
+        using (var channel = _connection.CreateModel())
+        {
+            var message = JsonConvert.SerializeObject(@event);
+            var body = Encoding.UTF8.GetBytes(message);
+            var messageId = Guid.NewGuid().ToString();
+            var properties = channel.CreateBasicProperties();
+            properties.ReplyTo = callName + "ResponseQueue";
+            properties.CorrelationId = messageId;
+            channel.BasicPublish(
+                exchange:"",
+                routingKey: callName,
+                basicProperties: properties,
+                body: body);
+            _taskQueue.TryAdd(messageId, taskCompletionSource);
+        }
+        return taskCompletionSource.Task;
     }
 }

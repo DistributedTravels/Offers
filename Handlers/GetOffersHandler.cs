@@ -3,12 +3,13 @@ using Models.Offers;
 using Newtonsoft.Json;
 using Offers.Database;
 using System.Linq;
+using Offers.Orchestration;
 
 namespace Offers.Handlers;
 
 public class GetOffersHandler : IHandler
 {
-    public GetOffersHandler(Action<EventModel> publish, WebApplication app) : base(publish, app)
+    public GetOffersHandler(Action<EventModel> publish, Func<EventModel, Task<string>> call, WebApplication app) : base(publish, call, app)
     {
         //additional constructor actions
     }
@@ -36,8 +37,11 @@ public class GetOffersHandler : IHandler
             }
             else
             {
-                // TODO create an orchestrator object which will get information from Transport and Hotels microservices
-                Console.WriteLine("not found");
+                Console.WriteLine("not found, asking others...");
+                var orchestrator = new GetOffersOrchestrator(this.publish, this.call);
+                var trips = await orchestrator.Orchestrate(@event);
+                // TODO save unique trips to database and return list to the one who asked
+                Console.WriteLine($"First or Default Trip with TravelID: {trips.First().TransportId}");
             }
         }
     }

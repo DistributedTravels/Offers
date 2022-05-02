@@ -5,11 +5,13 @@ namespace Offers.Handlers;
 public abstract class IHandler
 {
     protected Action<EventModel> publish; // to allow for publishing within handler
+    protected Func<EventModel, Task<string>> call;
     protected readonly WebApplication app; // required for database calls
 
-    public IHandler(Action<EventModel> publish, WebApplication app)
+    public IHandler(Action<EventModel> publish, Func<EventModel, Task<string>> call, WebApplication app)
     {
         this.publish = publish;
+        this.call = call;
         this.app = app;
     }
 
@@ -29,4 +31,5 @@ public abstract class IHandler
     {
         this.publish(@event);
     }
+    
 }
