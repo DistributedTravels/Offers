@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Offers;
+using Offers.Orchestration;
 using Offers.Database;
-using Offers.Database.Tables;
+using Database.Tables;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +20,14 @@ builder.Services.AddDbContext<OffersContext>(
         .EnableSensitiveDataLogging()
         .EnableDetailedErrors()
 );
+builder.Services.AddMassTransit(cfg =>
+{
+    cfg.UsingRabbitMq();
+    cfg.AddSagaStateMachine<OfferStateMachine, StatefulOffer>().InMemoryRepository();
+});
 var app = builder.Build();
-var manager = new EventManager(app);
-manager.ListenForEvents();
+//var manager = new EventManager(app);
+//manager.ListenForEvents();
 
 // example of inserting new Data to Database, Ensure created should be called at init of service (?)
 using (var contScope = app.Services.CreateScope())

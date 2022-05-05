@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Offers.Database.Tables;
+using Database.Tables;
 
 namespace Offers.Database;
 

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Offers.Database.Tables;
+namespace Database.Tables;
 
 public class Trip
 {

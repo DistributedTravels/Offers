@@ -2,7 +2,7 @@ using Models;
 using Models.Offers;
 using Models.Transport;
 using Newtonsoft.Json;
-using Offers.Database.Tables;
+using Database.Tables;
 
 namespace Offers.Orchestration;
 
@@ -28,7 +28,7 @@ public class GetOffersOrchestrator : Orchestrator<IEnumerable<Trip>>
         var numberOfPeople = @event.NumberOfPeople;
         var beginDate = @event.BeginDate;
         var endDate = @event.EndDate;
-        var getAvailableTravels = new GetAvailableTravelsEvent(beginDate.ToDateTime(new TimeOnly(0, 0)), numberOfPeople, "any", destination, "any");
+        var getAvailableTravels = new GetAvailableTravelsEvent(beginDate.ToDateTime(new TimeOnly(0, 0)), numberOfPeople, "any", destination);
         var availableTravelsResponse = await Call(getAvailableTravels);
         var travels =
             JsonConvert.DeserializeObject<GetAvailableTravelsReplyEvent>(availableTravelsResponse).TravelItems;
