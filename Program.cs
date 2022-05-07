@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Offers.Orchestration;
 using Offers.Database;
 using Database.Tables;
+using Models.Offers;
+using Models.Transport;
 using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,24 +24,16 @@ builder.Services.AddDbContext<OffersContext>(
 );
 builder.Services.AddMassTransit(cfg =>
 {
-    cfg.UsingRabbitMq();
     cfg.AddSagaStateMachine<OfferStateMachine, StatefulOffer>().InMemoryRepository();
+    cfg.UsingRabbitMq((context, rabbitCfg) =>
+    {
+        rabbitCfg.Host("rabbitmq", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+        rabbitCfg.ConfigureEndpoints(context);
+    });
 });
 var app = builder.Build();
-//var manager = new EventManager(app);
-//manager.ListenForEvents();
-
-// example of inserting new Data to Database, Ensure created should be called at init of service (?)
-using (var contScope = app.Services.CreateScope())
-using (var context = contScope.ServiceProvider.GetRequiredService<OffersContext>())
-{
-    // Ensure Deleted possible to use for testing
-    //context.Database.EnsureDeleted();
-    context.Database.EnsureCreated();
-    var test = new Trip { TransportId = 0, Destination = "Destination", BeginDate = new DateOnly(2022, 03, 01), EndDate = new DateOnly(2022, 04, 01), HotelName = "Hotel", HotelId = 0, NumberOfPeople = 4};
-    context.Trips.Add(test); // add new item
-    context.SaveChanges(); // save to DB
-    Console.WriteLine("Done inserting test data");
-    // manager.Publish(new ReserveTransportEvent(1));
-}
 app.Run();
