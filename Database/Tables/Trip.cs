@@ -25,4 +25,9 @@ public class Trip
         this.BeginDate = tripDto.BeginDate;
         this.EndDate = tripDto.EndDate;
     }
+
+    public TripDto ToTripDto()
+    {
+        return new TripDto() { TransportId = this.TransportId, HotelId = this.HotelId, Destination = this.Destination, NumberOfPeople = this.NumberOfPeople, BeginDate = this.BeginDate, EndDate = this.EndDate, HotelName = this.HotelName, Id = this.Id };
+    }
 }
