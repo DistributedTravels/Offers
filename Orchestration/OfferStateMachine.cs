@@ -50,8 +50,14 @@ namespace Offers.Orchestration
                         context.Saga.Destination = payload.Message.Destination;
                         // TODO get offers from database (if there are any)
                         context.Saga.Trips = new List<TripDto>();
+
+                        var trips = new List<TripDto>();
+                        trips.Add(new TripDto() { Destination = "Albania", HotelName = "Hotelabc" });
+                        context.Saga.Trips = trips;
+
                         Console.WriteLine("Received request for trips");
                     })
+                    .RespondAsync(context => context.Init<GetOffersReplyEvent> (new GetOffersReplyEvent() { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId , Trips = context.Saga.Trips }))
                     .PublishAsync(context => context.Init<GetTripsFromDatabaseEvent>(new GetTripsFromDatabaseEvent() { Destination = context.Saga.Destination,
                         BeginDate = context.Saga.BeginDate, EndDate = context.Saga.EndDate, NumberOfPeople = context.Saga.NumberOfPeople,
                         Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }))
