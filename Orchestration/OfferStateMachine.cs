@@ -2,6 +2,7 @@
 using Models.Offers;
 using Models.Offers.Dto;
 using Models.Transport;
+using Models.Hotels;
 using Database.Tables;
 using Offers.Database;
 using Offers.Services;
@@ -21,6 +22,7 @@ namespace Offers.Orchestration
         public Event<GetOffersEvent> GetOffersEvent { get; set; }
         public Event<GetAvailableTravelsReplyEvent> GetAvailableTravelsReplyEvent { get; set; }
         public Event<GetTripsFromDatabaseReplyEvent> GetTripsFromDatabaseReplyEvent { get; set; }
+        public Event<GetHotelsEventReply> GetHotelsEventReply { get; set; }
         // TODO events for getting hotels
 
         public OfferStateMachine()
@@ -29,6 +31,7 @@ namespace Offers.Orchestration
             Event(() => GetOffersEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); x.SelectId(context => context.Message.CorrelationId); });
             Event(() => GetTripsFromDatabaseReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             Event(() => GetAvailableTravelsReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
+            Event(() => GetHotelsEventReply, x => )
             // TODO check if IDs are correct
             // I might have made some mistakes...
 
@@ -48,14 +51,23 @@ namespace Offers.Orchestration
                         context.Saga.BeginDate = payload.Message.BeginDate;
                         context.Saga.EndDate = payload.Message.EndDate;
                         context.Saga.Destination = payload.Message.Destination;
+                        context.Saga.Departure = payload.Message.Departure;
+                        context.Saga.Adults = payload.Message.Adults;
+                        context.Saga.ChildrenUnder3 = payload.Message.ChildrenUnder3;
+                        context.Saga.ChildrenUnder10 = payload.Message.ChildrenUnder10;
+                        context.Saga.ChildrenUnder18 = payload.Message.ChildrenUnder18;
                         // TODO get offers from database (if there are any)
-                        context.Saga.Trips = new List<TripDto>();
+                        var trips = new List<TripDto>();
+                        context.Saga.Trips = trips;
                         Console.WriteLine("Received request for trips");
                     })
+                    //.RespondAsync(context => context.Init<GetOffersReplyEvent>(new GetOffersReplyEvent() { CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips }))
                     .PublishAsync(context => context.Init<GetTripsFromDatabaseEvent>(new GetTripsFromDatabaseEvent() { Destination = context.Saga.Destination,
                         BeginDate = context.Saga.BeginDate, EndDate = context.Saga.EndDate, NumberOfPeople = context.Saga.NumberOfPeople,
-                        Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }))
-                    .TransitionTo(AwaitingTrips));
+                        Departure = context.Saga.Departure, Adults = context.Saga.Adults, ChildrenUnder3 = context.Saga.ChildrenUnder3,
+                        ChildrenUnder10 = context.Saga.ChildrenUnder10, ChildrenUnder18 = context.Saga.ChildrenUnder18, Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }))
+                    .TransitionTo(AwaitingTrips)
+                    );
 
             WhenEnter(AwaitingTrips, binder => binder
             .Then(context => { Console.WriteLine("ENTERED AWAITING TRIPS"); }));
@@ -77,7 +89,8 @@ namespace Offers.Orchestration
                                 departure: context.Saga.BeginDate,
                                 freeSeats: context.Saga.NumberOfPeople)
                         { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }))
-                              //.PublishAsync(context => context.Init<GetAvailableHotelsEvent>(new GetAvailableHotelsEvent(...))
+                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination, beginDate: context.Saga.BeginDate,
+                                    endDate: context.Saga.EndDate) { CorrelationId = context.Saga.CorrelationId, Id = context.Saga.OffersId }))
                               .TransitionTo(AwaitingHotelsAndTravels),
                         x => x.TransitionTo(ReceivedHotelsAndTravels)));
 
@@ -102,28 +115,26 @@ namespace Offers.Orchestration
                         context.Saga.Travels = travels;
                         Console.WriteLine("Received travels from Transport");
                     })
-                    .TransitionTo(AwaitingHotels)
-                /*,
-                // TODO finish receiving hotels when service is ready
-                When(GetAvailableHotelsReplyEvent)
+                    .TransitionTo(AwaitingHotels),
+                
+                When(GetHotelsEventReply)
                     .Then(context =>
                     {
-                        if (!context.TryGetPayload(out SagaConsumeContext<StatefulOffer, GetAvailableHotelsReplyEvent> payload))
+                        if (!context.TryGetPayload(out SagaConsumeContext<StatefulOffer, GetHotelsEventReply> payload))
                         {
                             throw new Exception("Unable to retrieve payload with travels");
                         }
-                        var hotelsReceived = payload.Message.Hotels;
+                        var hotelsReceived = payload.Message.HotelItems;
                         var hotels = new List<HotelDto>();
                         foreach(var hotel in hotelsReceived)
                         {
-                            hotels.Add(new HotelDto(...));
+                            hotels.Add(new HotelDto(hotel));
                         }
                         context.Saga.Hotels = hotels;
                         Console.WriteLine("Received hotels from Hotels");
                     })
-                    .TransitionTo(AwaitingTravels)
-                */
-                );
+                    .TransitionTo(AwaitingTravels));
+
             WhenEnter(AwaitingHotels, binder => binder
             .Then(context => { Console.WriteLine("ENTERED AWAITING HOTELS"); }));
 
@@ -145,27 +156,26 @@ namespace Offers.Orchestration
                         Console.WriteLine("Received travels from Transport");
                     })
                     .TransitionTo(ReceivedHotelsAndTravels));
-            /*
+
             During(AwaitingTravels,
                 // TODO finish receiving hotels when service is ready
-                When(GetAvailableHotelsReplyEvent)
+                When(GetHotelsEventReply)
                     .Then(context =>
                     {
-                        if (!context.TryGetPayload(out SagaConsumeContext<StatefulOffer, GetAvailableHotelsReplyEvent> payload))
+                        if (!context.TryGetPayload(out SagaConsumeContext<StatefulOffer, GetHotelsEventReply> payload))
                         {
                             throw new Exception("Unable to retrieve payload with travels");
                         }
-                        var hotelsReceived = payload.Message.Hotels;
+                        var hotelsReceived = payload.Message.HotelItems;
                         var hotels = new List<HotelDto>();
                         foreach (var hotel in hotelsReceived)
                         {
-                            hotels.Add(new HotelDto(...));
+                            hotels.Add(new HotelDto(hotel));
                         }
                         context.Saga.Hotels = hotels;
                         Console.WriteLine("Received hotels from Hotels");
                     })
                     .TransitionTo(ReceivedHotelsAndTravels));
-            */
 
             WhenEnter(ReceivedHotelsAndTravels, binder => binder
                 .Then(context => 
@@ -182,11 +192,17 @@ namespace Offers.Orchestration
                                 trips.Add(new TripDto()
                                 {
                                     Destination = hotel.Location,
+                                    Departure = context.Saga.Departure,
                                     BeginDate = context.Saga.BeginDate,
+                                    DepartureTime = travel.DepartureTime,
                                     EndDate = context.Saga.EndDate,
-                                    HotelId = hotel.HotelId,
-                                    HotelName = hotel.Name,
+                                    HotelId = hotel.HotelItemId,
+                                    HotelName = hotel.HotelName,
                                     NumberOfPeople = context.Saga.NumberOfPeople,
+                                    Adults = context.Saga.Adults,
+                                    ChildrenUnder3 = context.Saga.ChildrenUnder3,
+                                    ChildrenUnder10 = context.Saga.ChildrenUnder10,
+                                    ChildrenUnder18 = context.Saga.ChildrenUnder18,
                                     TransportId = travel.TravelId,
                                 });
                             }
@@ -194,7 +210,7 @@ namespace Offers.Orchestration
                     }
                     context.Saga.Trips = trips;
                     // TODO save new trips to database
-                    context.RespondAsync(new GetOffersReplyEvent() { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }); 
+                    context.RespondAsync(new GetOffersReplyEvent() { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips}); 
                 })
                 .Finalize());
         }
