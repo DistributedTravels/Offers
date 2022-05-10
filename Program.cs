@@ -53,12 +53,9 @@ var app = builder.Build();
 //using (var context = contScope.ServiceProvider.GetRequiredService<OffersContext>())
 //{
 //    // Ensure Deleted possible to use for testing
-//    //context.Database.EnsureDeleted();
+//    context.Database.EnsureDeleted();
 //    context.Database.EnsureCreated();
-//    var test = new Trip { Destination = "whatever", BeginDate = DateTime.UtcNow, EndDate = DateTime.UtcNow, HotelId = 0, HotelName = "hortel", NumberOfPeople = 3, TransportId = 3 };
-//    context.Trips.Add(test); // add new item
 //    context.SaveChanges(); // save to DB
-//    Console.WriteLine("Done inserting test data");
-//    // manager.Publish(new ReserveTransportEvent(1));
+//    Console.WriteLine("Done clearing database");
 //}
 app.Run();

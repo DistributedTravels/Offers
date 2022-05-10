@@ -31,7 +31,7 @@ namespace Offers.Orchestration
             Event(() => GetOffersEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); x.SelectId(context => context.Message.CorrelationId); });
             Event(() => GetTripsFromDatabaseReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             Event(() => GetAvailableTravelsReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
-            Event(() => GetHotelsEventReply, x => )
+            Event(() => GetHotelsEventReply, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             // TODO check if IDs are correct
             // I might have made some mistakes...
 
@@ -86,11 +86,19 @@ namespace Offers.Orchestration
                     })
                     .IfElse(x => x.Saga.Trips.Count() < 10,
                         x => x.PublishAsync(context => context.Init<GetAvailableTravelsEvent>(new GetAvailableTravelsEvent(
-                                departure: context.Saga.BeginDate,
-                                freeSeats: context.Saga.NumberOfPeople)
-                        { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId }))
-                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination, beginDate: context.Saga.BeginDate,
-                                    endDate: context.Saga.EndDate) { CorrelationId = context.Saga.CorrelationId, Id = context.Saga.OffersId }))
+                                departureTime: context.Saga.BeginDate,
+                                freeSeats: context.Saga.NumberOfPeople,
+                                source: context.Saga.Departure,
+                                destination: context.Saga.Destination)
+                                {
+                                    Id = context.Saga.OffersId, 
+                                    CorrelationId = context.Saga.CorrelationId 
+                                }))
+                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination) 
+                              { 
+                                  CorrelationId = context.Saga.CorrelationId, 
+                                  Id = context.Saga.OffersId 
+                              }))
                               .TransitionTo(AwaitingHotelsAndTravels),
                         x => x.TransitionTo(ReceivedHotelsAndTravels)));
 

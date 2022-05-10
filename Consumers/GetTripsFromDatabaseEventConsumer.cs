@@ -21,7 +21,11 @@ namespace Offers.Consumers
             Console.WriteLine($"Consumer: Received event to get trips from database with Id: {context.Message.Id} and CorrelationId: {context.Message.CorrelationId}");
             var correlationId = context.Message.CorrelationId;
             var id = context.Message.Id;
-            var trips = _service.GetTrips();
+            var beginDate = context.Message.BeginDate;
+            var endDate = context.Message.EndDate;
+            var destination = context.Message.Destination;
+            var departure = context.Message.Departure;
+            var trips = _service.GetTrips(beginDate: beginDate, endDate: endDate, destination: destination, departure: departure);
             var tripsDto = new List<TripDto>();
             foreach(var trip in trips)
             {
