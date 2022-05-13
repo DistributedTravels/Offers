@@ -23,6 +23,7 @@ namespace Offers.Orchestration
         public Event<GetAvailableTravelsReplyEvent> GetAvailableTravelsReplyEvent { get; set; }
         public Event<GetTripsFromDatabaseReplyEvent> GetTripsFromDatabaseReplyEvent { get; set; }
         public Event<GetHotelsEventReply> GetHotelsEventReply { get; set; }
+        public Event<CheckGetOffersEvent> CheckGetOffersEvent { get; set; }
         // TODO events for getting hotels
 
         public OfferStateMachine()
@@ -32,6 +33,7 @@ namespace Offers.Orchestration
             Event(() => GetTripsFromDatabaseReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             Event(() => GetAvailableTravelsReplyEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             Event(() => GetHotelsEventReply, x => { x.CorrelateById(context => context.Message.CorrelationId); });
+            Event(() => CheckGetOffersEvent, x => { x.CorrelateById(context => context.Message.CorrelationId); });
             // TODO check if IDs are correct
             // I might have made some mistakes...
 
@@ -186,7 +188,7 @@ namespace Offers.Orchestration
                     .TransitionTo(ReceivedHotelsAndTravels));
 
             WhenEnter(ReceivedHotelsAndTravels, binder => binder
-                .Then(context => 
+                .Then(context =>
                 {
                     Console.WriteLine("ENTERED FINAL STEP");
                     // TODO check if trip generation is alright
@@ -217,10 +219,13 @@ namespace Offers.Orchestration
                         }
                     }
                     context.Saga.Trips = trips;
-                    // TODO save new trips to database
-                    context.RespondAsync(new GetOffersReplyEvent() { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips}); 
-                })
-                .Finalize());
+                    // TODO save new trips to database 
+                }));
+
+            During(ReceivedHotelsAndTravels,
+                When(CheckGetOffersEvent)
+                    .RespondAsync(context => context.Init<GetOffersReplyEvent>(new GetOffersReplyEvent() { Id = context.Saga.OffersId, CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips }))
+                    .Finalize());
         }
     }
 }
