@@ -49,13 +49,12 @@ builder.Services.AddMassTransit(cfg =>
     });
 });
 var app = builder.Build();
-//using (var contScope = app.Services.CreateScope())
-//using (var context = contScope.ServiceProvider.GetRequiredService<OffersContext>())
-//{
-//    // Ensure Deleted possible to use for testing
-//    context.Database.EnsureDeleted();
-//    context.Database.EnsureCreated();
-//    context.SaveChanges(); // save to DB
-//    Console.WriteLine("Done clearing database");
-//}
+using (var contScope = app.Services.CreateScope())
+using (var context = contScope.ServiceProvider.GetRequiredService<OffersContext>())
+{
+    // Ensure Deleted possible to use for testing
+    context.Database.EnsureCreated();
+    context.SaveChanges(); // save to DB
+    Console.WriteLine("Done clearing database");
+}
 app.Run();

@@ -22,5 +22,6 @@ namespace Offers.Orchestration
         public IEnumerable<TripDto> Trips { get; set; }
         public IEnumerable<TravelDto> Travels { get; set; }
         public IEnumerable<HotelDto> Hotels { get; set; }
+        public Uri? RequestUri { get; set; }
     }
 }
