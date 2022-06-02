@@ -96,7 +96,7 @@ namespace Offers.Orchestration
                                     Id = context.Saga.OffersId, 
                                     CorrelationId = context.Saga.CorrelationId 
                                 }))
-                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination) 
+                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination == "gdziekolwiek" ? "any" : context.Saga.Destination) 
                               { 
                                   CorrelationId = context.Saga.CorrelationId, 
                                   Id = context.Saga.OffersId 
