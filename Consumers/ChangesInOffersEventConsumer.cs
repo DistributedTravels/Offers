@@ -30,6 +30,7 @@ namespace Offers.Consumers
                 PlaneAvailable = context.Message.PlaneAvailable,
                 CreateDate = context.Message.CreationDate.ToUniversalTime()
             };
+
             // changes in hotel
             if (offerChanges.HotelId != -1)
             {

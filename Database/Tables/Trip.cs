@@ -36,6 +36,7 @@ public class Trip
     {
         this.TransportId = tripDto.TransportId;
         this.HotelId = tripDto.HotelId;
+        this.HotelName = tripDto.HotelName;
         this.Destination = tripDto.Destination;
         this.NumberOfPeople = tripDto.NumberOfPeople;
         this.BeginDate = tripDto.BeginDate;
@@ -62,6 +63,7 @@ public class Trip
     {
         this.TransportId = trip.TransportId;
         this.HotelId = trip.HotelId;
+        this.HotelName = trip.HotelName;
         this.Destination = trip.Destination;
         this.NumberOfPeople = trip.NumberOfPeople;
         this.BeginDate = trip.BeginDate;

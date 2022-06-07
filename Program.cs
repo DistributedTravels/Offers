@@ -25,6 +25,7 @@ builder.Services.AddDbContext<OffersContext>(
         .EnableDetailedErrors()
 );
 builder.Services.AddScoped<ITripsService, TripsService>();
+builder.Services.AddScoped<IOfferChangesService, OfferChangesService>();
 builder.Services.AddMassTransit(cfg =>
 {
     cfg.AddSagaStateMachine<OfferStateMachine, StatefulOffer>(context =>
@@ -33,6 +34,16 @@ builder.Services.AddMassTransit(cfg =>
         context.UseInMemoryOutbox();
     }).InMemoryRepository();
     cfg.AddConsumer<GetTripsFromDatabaseEventConsumer>(context =>
+    {
+        context.UseMessageRetry(r => r.Interval(3, 1000));
+        context.UseInMemoryOutbox();
+    });
+    cfg.AddConsumer<ChangesInOffersEventConsumer>(context =>
+    {
+        context.UseMessageRetry(r => r.Interval(3, 1000));
+        context.UseInMemoryOutbox();
+    });
+    cfg.AddConsumer<SaveOffersToDatabaseEventConsumer>(context =>
     {
         context.UseMessageRetry(r => r.Interval(3, 1000));
         context.UseInMemoryOutbox();
