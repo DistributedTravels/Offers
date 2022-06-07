@@ -65,6 +65,7 @@ namespace Offers.Consumers
                 }
             }
             _offerChangesService.AddChanges(offerChanges);
+            context.Respond(new ChangesInOffersReplyEvent());
         }
     }
 }
