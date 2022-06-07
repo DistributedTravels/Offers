@@ -60,6 +60,10 @@ namespace Offers.Orchestration
                         context.Saga.ChildrenUnder18 = payload.Message.ChildrenUnder18;
                         // TODO get offers from database (if there are any)
                         var trips = new List<TripDto>();
+                        var hotels = new List<HotelDto>();
+                        var travels = new List<TravelDto>();
+                        context.Saga.Hotels = hotels;
+                        context.Saga.Travels = travels;
                         context.Saga.Trips = trips;
                         Console.WriteLine("Received request for trips");
                         context.Saga.RequestUri = payload.ResponseAddress;
@@ -86,7 +90,7 @@ namespace Offers.Orchestration
                         }
                         context.Saga.Trips = payload.Message.Trips;
                     })
-                    .IfElse(x => x.Saga.Trips.Count() < 10,
+                    .IfElse(x => x.Saga.Trips.Count() < 3,
                         x => x.PublishAsync(context => context.Init<GetAvailableTravelsEvent>(new GetAvailableTravelsEvent(
                                 departureTime: context.Saga.BeginDate,
                                 freeSeats: context.Saga.NumberOfPeople,
@@ -168,7 +172,6 @@ namespace Offers.Orchestration
                     .TransitionTo(ReceivedHotelsAndTravels));
 
             During(AwaitingTravels,
-                // TODO finish receiving hotels when service is ready
                 When(GetAvailableTravelsReplyEvent)
                     .Then(context =>
                     {
@@ -190,38 +193,52 @@ namespace Offers.Orchestration
             WhenEnter(ReceivedHotelsAndTravels, binder => binder
                 .Then(context =>
                 {
-                    Console.WriteLine("ENTERED FINAL STEP");
-                    // TODO check if trip generation is alright
-                    var trips = new List<TripDto>();
-                    foreach (var travel in context.Saga.Travels)
+                    if (context.Saga.Hotels.Count() > 0)
                     {
-                        foreach (var hotel in context.Saga.Hotels)
+                        Console.WriteLine("ENTERED FINAL STEP");
+                        var trips = new List<TripDto>();
+                        foreach (var travel in context.Saga.Travels)
                         {
-                            if (hotel.Location.Equals(travel.Destination))
+                            foreach (var hotel in context.Saga.Hotels)
                             {
-                                trips.Add(new TripDto()
+                                if (hotel.Location.Equals(travel.Destination))
                                 {
-                                    Destination = hotel.Location,
-                                    Departure = context.Saga.Departure,
-                                    BeginDate = context.Saga.BeginDate,
-                                    DepartureTime = travel.DepartureTime,
-                                    EndDate = context.Saga.EndDate,
-                                    HotelId = hotel.HotelItemId,
-                                    HotelName = hotel.HotelName,
-                                    NumberOfPeople = context.Saga.NumberOfPeople,
-                                    Adults = context.Saga.Adults,
-                                    ChildrenUnder3 = context.Saga.ChildrenUnder3,
-                                    ChildrenUnder10 = context.Saga.ChildrenUnder10,
-                                    ChildrenUnder18 = context.Saga.ChildrenUnder18,
-                                    TransportId = travel.TravelId,
-                                });
+                                    trips.Add(new TripDto()
+                                    {
+                                        Destination = hotel.Location,
+                                        Departure = context.Saga.Departure,
+                                        BeginDate = context.Saga.BeginDate,
+                                        DepartureTime = travel.DepartureTime,
+                                        EndDate = context.Saga.EndDate,
+                                        HotelId = hotel.HotelItemId,
+                                        HotelName = hotel.HotelName,
+                                        NumberOfPeople = context.Saga.NumberOfPeople,
+                                        Adults = context.Saga.Adults,
+                                        ChildrenUnder3 = context.Saga.ChildrenUnder3,
+                                        ChildrenUnder10 = context.Saga.ChildrenUnder10,
+                                        ChildrenUnder18 = context.Saga.ChildrenUnder18,
+                                        TransportId = travel.TravelId,
+                                        PlaneAvailable = travel.AvailableSeats > 0,
+                                        WifiAvailable = hotel.WifiAvailable,
+                                        BreakfastAvailable = hotel.BreakfastAvailable,
+                                        OfferAvailable = hotel.BigRoomsAvailable * 4 + hotel.SmallRoomsAvailable * 2 > context.Saga.NumberOfPeople,
+                                        HotelPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days,
+                                        TotalPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days
+                                    });
+                                }
                             }
                         }
+                        context.Saga.Trips = trips;
                     }
-                    context.Saga.Trips = trips;
                     // TODO save new trips to database
                     context.Send(context.Saga.RequestUri, new GetOffersReplyEvent() { CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips });
-                }));
+                })
+                .PublishAsync(context => context.Init<SaveOffersToDatabaseEvent>(
+                    new SaveOffersToDatabaseEvent()
+                    {
+                        Trips = context.Saga.Trips,
+                        CorrelationId = context.Saga.CorrelationId
+                    })));
         }
     }
 }

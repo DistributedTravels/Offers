@@ -12,8 +12,10 @@ public class OffersContext : DbContext
         .Options){ }
     public static string ConnectionString;
     public DbSet<Trip> Trips { get; set; }
+    public DbSet<OfferChangeEntity> OfferChanges { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Trip>().ToTable("Trip"); // table name overwrite (removing the plural "s")
+        modelBuilder.Entity<OfferChangeEntity>().ToTable("OfferChangeEntity");
     }
 }
