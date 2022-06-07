@@ -39,8 +39,12 @@ namespace Offers.Consumers
                     .ToList();
                 foreach (var t in affectedTrips)
                 {
+                    var changedOfferEvent = new ChangedOfferEvent();
+                    changedOfferEvent.oldOffer = t.ToTripDto();
                     t.ApplyChanges(offerChanges);
+                    changedOfferEvent.newOffer = t.ToTripDto();
                     _tripsService.UpdateTrip(t);
+                    await context.Publish(changedOfferEvent);
                 }
             }
             // changes in transport
@@ -52,8 +56,12 @@ namespace Offers.Consumers
                     .ToList();
                 foreach (var t in affectedTrips)
                 {
+                    var changedOfferEvent = new ChangedOfferEvent();
+                    changedOfferEvent.oldOffer = t.ToTripDto();
                     t.ApplyChanges(offerChanges);
+                    changedOfferEvent.newOffer = t.ToTripDto();
                     _tripsService.UpdateTrip(t);
+                    await context.Publish(changedOfferEvent);
                 }
             }
             _offerChangesService.AddChanges(offerChanges);
