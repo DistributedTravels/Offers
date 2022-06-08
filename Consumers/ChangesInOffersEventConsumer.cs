@@ -41,9 +41,9 @@ namespace Offers.Consumers
                 foreach (var t in affectedTrips)
                 {
                     var changedOfferEvent = new ChangedOfferEvent();
-                    changedOfferEvent.oldOffer = t.ToTripDto();
+                    changedOfferEvent.OldOffer = t.ToTripDto();
                     t.ApplyChanges(offerChanges);
-                    changedOfferEvent.newOffer = t.ToTripDto();
+                    changedOfferEvent.NewOffer = t.ToTripDto();
                     _tripsService.UpdateTrip(t);
                     await context.Publish(changedOfferEvent);
                 }
@@ -58,9 +58,9 @@ namespace Offers.Consumers
                 foreach (var t in affectedTrips)
                 {
                     var changedOfferEvent = new ChangedOfferEvent();
-                    changedOfferEvent.oldOffer = t.ToTripDto();
+                    changedOfferEvent.OldOffer = t.ToTripDto();
                     t.ApplyChanges(offerChanges);
-                    changedOfferEvent.newOffer = t.ToTripDto();
+                    changedOfferEvent.NewOffer = t.ToTripDto();
                     _tripsService.UpdateTrip(t);
                     await context.Publish(changedOfferEvent);
                 }
