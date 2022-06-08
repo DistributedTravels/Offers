@@ -100,8 +100,11 @@ namespace Offers.Orchestration
                                     Id = context.Saga.OffersId, 
                                     CorrelationId = context.Saga.CorrelationId 
                                 }))
-                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent(country: context.Saga.Destination == "gdziekolwiek" ? "any" : context.Saga.Destination) 
+                              .PublishAsync(context => context.Init<GetHotelsEvent>(new GetHotelsEvent() 
                               { 
+                                  Country = context.Saga.Destination == "gdziekolwiek" ? "any" : context.Saga.Destination,
+                                  BeginDate = context.Saga.BeginDate.ToUniversalTime(),
+                                  EndDate = context.Saga.EndDate.ToUniversalTime(),
                                   CorrelationId = context.Saga.CorrelationId, 
                                   Id = context.Saga.OffersId 
                               }))
