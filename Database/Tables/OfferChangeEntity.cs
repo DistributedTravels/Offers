@@ -14,6 +14,7 @@ namespace Database.Tables
         public int SmallRoomsAvaialable { get; set; }
         public bool WifiAvailable { get; set; }
         public bool BreakfastAvailable { get; set; }
+        public double BreakfastPrice { get; set; }
         public double HotelPricePerPerson { get; set; }
         public int TransportId { get; set; }
         public double TransportPricePerSeat { get; set; }

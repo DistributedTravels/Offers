@@ -223,6 +223,8 @@ namespace Offers.Orchestration
                                         BreakfastAvailable = hotel.BreakfastAvailable,
                                         OfferAvailable = hotel.BigRoomsAvailable * 4 + hotel.SmallRoomsAvailable * 2 > context.Saga.NumberOfPeople,
                                         HotelPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days,
+                                        BreakfastPrice = context.Saga.NumberOfPeople * hotel.BreakfastPrice * (context.Saga.EndDate - context.Saga.BeginDate).Days,
+                                        TransportPricePerSeat = travel.PricePerSeat,
                                         TotalPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days
                                     });
                                 }

@@ -31,6 +31,7 @@ public class Trip
     public int SmallRoomsAvailable { get; set; }
     public bool OfferAvailable { get; set; }
     public bool PlaneAvailable { get; set; }
+    public double BreakfastPrice { get; set; }
 
     public void SetFields(TripDto tripDto)
     {
@@ -51,6 +52,7 @@ public class Trip
         this.TransportPricePerSeat = tripDto.TransportPricePerSeat;
         this.PlaneAvailable = tripDto.PlaneAvailable;
         this.HotelPrice = tripDto.HotelPrice;
+        this.BreakfastPrice = tripDto.BreakfastPrice;
         this.TotalPrice = tripDto.TotalPrice;
         this.WifiAvailable = tripDto.WifiAvailable;
         this.BreakfastAvailable = tripDto.BreakfastAvailable;
@@ -84,25 +86,26 @@ public class Trip
         this.BigRoomsAvailable = trip.BigRoomsAvailable;
         this.SmallRoomsAvailable = trip.SmallRoomsAvailable;
         this.OfferAvailable = trip.OfferAvailable;
+        this.BreakfastPrice = trip.BreakfastPrice;
     }
 
     public TripDto ToTripDto()
     {
-        return new TripDto() 
-        { 
-            TransportId = this.TransportId, 
-            HotelId = this.HotelId, 
-            Destination = this.Destination, 
-            NumberOfPeople = this.NumberOfPeople, 
-            BeginDate = this.BeginDate, 
+        return new TripDto()
+        {
+            TransportId = this.TransportId,
+            HotelId = this.HotelId,
+            Destination = this.Destination,
+            NumberOfPeople = this.NumberOfPeople,
+            BeginDate = this.BeginDate,
             EndDate = this.EndDate,
-            HotelName = this.HotelName, 
-            Id = this.Id, 
+            HotelName = this.HotelName,
+            Id = this.Id,
             Adults = this.Adults,
             ChildrenUnder3 = this.ChildrenUnder3,
-            ChildrenUnder10 = this.ChildrenUnder10, 
+            ChildrenUnder10 = this.ChildrenUnder10,
             ChildrenUnder18 = this.ChildrenUnder18,
-            Departure = this.Departure, 
+            Departure = this.Departure,
             TripId = this.TripId,
             DepartureTime = this.DepartureTime,
             TransportPricePerSeat = this.TransportPricePerSeat,
@@ -113,7 +116,8 @@ public class Trip
             BigRoomsAvailable = this.BigRoomsAvailable,
             SmallRoomsAvailable = this.SmallRoomsAvailable,
             OfferAvailable = this.OfferAvailable,
-            PlaneAvailable = this.OfferAvailable
+            PlaneAvailable = this.OfferAvailable,
+            BreakfastPrice = this.BreakfastPrice
         };
     }
 
@@ -129,6 +133,8 @@ public class Trip
             this.SmallRoomsAvailable = offerChange.SmallRoomsAvaialable;
             this.WifiAvailable = offerChange.WifiAvailable;
             this.BreakfastAvailable = offerChange.BreakfastAvailable;
+            this.BreakfastPrice = offerChange.BreakfastPrice;
+            this.TotalPrice = this.HotelPrice;
         }
         // change from transport
         else
@@ -136,6 +142,5 @@ public class Trip
             this.TransportPricePerSeat = offerChange.TransportPricePerSeat;
             this.PlaneAvailable = offerChange.PlaneAvailable;
         }
-        this.TotalPrice = this.HotelPrice;
     }
 }
