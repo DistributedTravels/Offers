@@ -133,7 +133,7 @@ public class Trip
             this.SmallRoomsAvailable = offerChange.SmallRoomsAvaialable;
             this.WifiAvailable = offerChange.WifiAvailable;
             this.BreakfastAvailable = offerChange.BreakfastAvailable;
-            this.BreakfastPrice = offerChange.BreakfastPrice;
+            this.BreakfastPrice = offerChange.BreakfastPrice * this.NumberOfPeople * (this.EndDate - this.BeginDate).Days;
             this.TotalPrice = this.HotelPrice;
         }
         // change from transport
