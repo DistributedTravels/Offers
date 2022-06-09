@@ -228,7 +228,9 @@ namespace Offers.Orchestration
                                         HotelPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days,
                                         BreakfastPrice = context.Saga.NumberOfPeople * hotel.BreakfastPrice * (context.Saga.EndDate - context.Saga.BeginDate).Days,
                                         TransportPricePerSeat = travel.PricePerSeat,
-                                        TotalPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days
+                                        TotalPrice = context.Saga.NumberOfPeople * hotel.PricePerPersonPerNight * (context.Saga.EndDate - context.Saga.BeginDate).Days,
+                                        BigRoomsAvailable = hotel.BigRoomsAvailable,
+                                        SmallRoomsAvailable = hotel.SmallRoomsAvailable
                                     });
                                 }
                             }
