@@ -58,7 +58,7 @@ namespace Offers.Services
         {
             var foundTrip = _context.Trips.FirstOrDefault(t => t.Id == trip.Id);
             foundTrip.SetFields(trip);
-            _context.Trips.Update(trip);
+            _context.Trips.Update(foundTrip);
             _context.SaveChanges();
         }
     }
