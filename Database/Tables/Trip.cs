@@ -116,7 +116,7 @@ public class Trip
             BigRoomsAvailable = this.BigRoomsAvailable,
             SmallRoomsAvailable = this.SmallRoomsAvailable,
             OfferAvailable = this.OfferAvailable,
-            PlaneAvailable = this.OfferAvailable,
+            PlaneAvailable = this.PlaneAvailable,
             BreakfastPrice = this.BreakfastPrice
         };
     }
