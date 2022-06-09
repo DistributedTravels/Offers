@@ -240,12 +240,13 @@ namespace Offers.Orchestration
                     // TODO save new trips to database
                     context.Send(context.Saga.RequestUri, new GetOffersReplyEvent() { CorrelationId = context.Saga.CorrelationId, Trips = context.Saga.Trips });
                 })
-                .PublishAsync(context => context.Init<SaveOffersToDatabaseEvent>(
+                .If(context => context.Saga.Hotels.Count() > 0,
+                    context => context.PublishAsync(context => context.Init<SaveOffersToDatabaseEvent>(
                     new SaveOffersToDatabaseEvent()
                     {
                         Trips = context.Saga.Trips,
                         CorrelationId = context.Saga.CorrelationId
-                    })));
+                    }))));
         }
     }
 }
